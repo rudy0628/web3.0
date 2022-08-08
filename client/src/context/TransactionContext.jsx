@@ -8,8 +8,12 @@ export const TransactionContext = React.createContext();
 const { ethereum } = window;
 
 const getEthereumContract = () => {
+	// Create a provide for ethereum
 	const provider = new ethers.providers.Web3Provider(ethereum);
+	// Get signer from provider
 	const signer = provider.getSigner();
+
+	// Use ethers object create contract
 	const transactionContract = new ethers.Contract(
 		contractAddress,
 		contractABI,
@@ -42,10 +46,14 @@ export const TransactionProvider = ({ children }) => {
 		try {
 			if (!ethereum) return alert('Please install metamask');
 
+			// Get the contract
 			const transactionContract = getEthereumContract();
+
+			// Use contract method getAllTransactions
 			const availableTransactions =
 				await transactionContract.getAllTransactions();
 
+			// Clean the structure from availableTransactions
 			const structuredTransactions = availableTransactions.map(transaction => ({
 				addressTo: transaction.receiver,
 				addressFrom: transaction.sender,
@@ -75,6 +83,7 @@ export const TransactionProvider = ({ children }) => {
 			if (accounts.length) {
 				setCurrentAccount(accounts[0]);
 
+				// Get all transactions when account is existed.
 				getAllTransactions();
 			} else {
 				console.log('No accounts found!');
@@ -87,9 +96,13 @@ export const TransactionProvider = ({ children }) => {
 
 	const checkIfTransactionsExist = async () => {
 		try {
+			// Get Contract
 			const transactionContract = getEthereumContract();
+
+			// Use contract method getTransactionCount
 			const transactionCount = await transactionContract.getTransactionCount();
 
+			// Set transactionCount to local storage
 			window.localStorage.setItem('transactionCount', transactionCount);
 		} catch (error) {
 			console.log(error);
@@ -120,6 +133,8 @@ export const TransactionProvider = ({ children }) => {
 		try {
 			const { addressTo, amount, keyword, message } = formData;
 			const transactionContract = getEthereumContract();
+
+			// Transfer amount to gas unit
 			const parsedAmount = ethers.utils.parseEther(amount);
 
 			// gas => 0x5208 = 21000 gwei = 0.000021 ether
@@ -157,13 +172,14 @@ export const TransactionProvider = ({ children }) => {
 			const transactionCount = await transactionContract.getTransactionCount();
 			setTransactionCount(+transactionCount);
 
-			window.reload();
+			window.location.reload();
 		} catch (error) {
 			console.log(error);
 			throw new Error('No ethereum object!');
 		}
 	};
 
+	// When user initially visit the page, check if wallet is connected and transactions is exist.
 	useEffect(() => {
 		checkIfWalletIsConnected();
 		checkIfTransactionsExist();
